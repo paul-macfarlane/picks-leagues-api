@@ -7,13 +7,21 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.entity';
 import { UserResponseDto } from './dto/user-response.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserOwnershipGuard } from './guards/user-ownership.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -34,6 +42,8 @@ export class UsersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
     status: 200,
@@ -45,6 +55,8 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiResponse({
     status: 200,
@@ -59,6 +71,8 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, UserOwnershipGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a user' })
   @ApiResponse({
     status: 200,
@@ -74,6 +88,8 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, UserOwnershipGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({
     status: 200,

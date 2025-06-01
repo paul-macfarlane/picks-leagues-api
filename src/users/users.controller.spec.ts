@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
+import { CanActivate } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserOwnershipGuard } from './guards/user-ownership.guard';
 
 describe('UsersController', () => {
   let controller: UsersController;
   let service: UsersService;
+  let module: TestingModule;
 
   const mockUser = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -27,7 +31,7 @@ describe('UsersController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
         {
@@ -35,7 +39,12 @@ describe('UsersController', () => {
           useValue: mockUsersService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .overrideGuard(UserOwnershipGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
     service = module.get<UsersService>(UsersService);
@@ -65,7 +74,7 @@ describe('UsersController', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of users', async () => {
+    it('should return an array of users when authenticated', async () => {
       const result = await controller.findAll();
       expect(result).toEqual([mockUser]);
       expect(service.findAll).toHaveBeenCalled();
@@ -73,7 +82,7 @@ describe('UsersController', () => {
   });
 
   describe('findOne', () => {
-    it('should return a user', async () => {
+    it('should return a user when authenticated', async () => {
       const result = await controller.findOne(mockUser.id);
       expect(result).toEqual(mockUser);
       expect(service.findOne).toHaveBeenCalledWith(mockUser.id);
@@ -81,22 +90,49 @@ describe('UsersController', () => {
   });
 
   describe('update', () => {
-    it('should update a user', async () => {
+    let jwtGuard: CanActivate & { canActivate: jest.Mock };
+    let ownershipGuard: CanActivate & { canActivate: jest.Mock };
+
+    beforeEach(() => {
+      jwtGuard = module.get<CanActivate & { canActivate: jest.Mock }>(
+        JwtAuthGuard,
+      );
+      ownershipGuard = module.get<CanActivate & { canActivate: jest.Mock }>(
+        UserOwnershipGuard,
+      );
+    });
+
+    it('should update a user when authenticated and owner', async () => {
+      jwtGuard.canActivate.mockReturnValue(true);
+      ownershipGuard.canActivate.mockReturnValue(true);
+
       const updateUserDto: UpdateUserDto = {
         firstName: 'Jane',
       };
-
       const result = await controller.update(mockUser.id, updateUserDto);
-      expect(result).toEqual({
-        id: mockUser.id,
-        ...updateUserDto,
-      });
+
       expect(service.update).toHaveBeenCalledWith(mockUser.id, updateUserDto);
+      expect(result).toEqual({ id: mockUser.id, ...updateUserDto });
     });
   });
 
   describe('remove', () => {
-    it('should remove a user', async () => {
+    let jwtGuard: CanActivate & { canActivate: jest.Mock };
+    let ownershipGuard: CanActivate & { canActivate: jest.Mock };
+
+    beforeEach(() => {
+      jwtGuard = module.get<CanActivate & { canActivate: jest.Mock }>(
+        JwtAuthGuard,
+      );
+      ownershipGuard = module.get<CanActivate & { canActivate: jest.Mock }>(
+        UserOwnershipGuard,
+      );
+    });
+
+    it('should remove a user when authenticated and owner', async () => {
+      jwtGuard.canActivate.mockReturnValue(true);
+      ownershipGuard.canActivate.mockReturnValue(true);
+
       await controller.remove(mockUser.id);
       expect(service.remove).toHaveBeenCalledWith(mockUser.id);
     });
