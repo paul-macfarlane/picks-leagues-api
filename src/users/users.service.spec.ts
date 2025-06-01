@@ -61,14 +61,26 @@ describe('UsersService', () => {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
+        password: 'StrongP@ssw0rd',
+        username: 'johndoe',
       };
 
       const result = await service.create(createUserDto);
       expect(result).toEqual({
         id: expect.any(String),
-        ...createUserDto,
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
+        email: createUserDto.email,
+        password: expect.any(String),
+        username: createUserDto.username,
       });
-      expect(repo.create).toHaveBeenCalledWith(createUserDto);
+      expect(repo.create).toHaveBeenCalledWith({
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
+        email: createUserDto.email,
+        password: expect.any(String),
+        username: createUserDto.username,
+      });
       expect(repo.save).toHaveBeenCalled();
     });
   });

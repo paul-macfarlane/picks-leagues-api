@@ -13,6 +13,10 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ApiProperty({ example: 'johndoe', maxLength: 100 })
+  @Column({ length: 100, unique: true })
+  username: string;
+
   @ApiProperty({ example: 'John', maxLength: 100 })
   @Column({ length: 100 })
   firstName: string;
@@ -24,6 +28,9 @@ export class User {
   @ApiProperty({ example: 'john.doe@example.com' })
   @Column({ unique: true })
   email: string;
+
+  @Column()
+  password: string;
 
   @ApiProperty({ example: '2025-05-31T19:28:21.000Z' })
   @CreateDateColumn()

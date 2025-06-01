@@ -51,6 +51,8 @@ describe('UsersController', () => {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
+        username: 'johndoe',
+        password: 'StrongP@ssw0rd',
       };
 
       const result = await controller.create(createUserDto);
