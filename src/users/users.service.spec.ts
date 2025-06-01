@@ -71,7 +71,6 @@ describe('UsersService', () => {
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
         email: createUserDto.email,
-        password: expect.any(String),
         username: createUserDto.username,
       });
       expect(repo.create).toHaveBeenCalledWith({

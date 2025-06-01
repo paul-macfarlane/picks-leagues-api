@@ -17,7 +17,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     // Check if username already exists
     const existingUser = await this.findByUsername(createUserDto.username);
     if (existingUser) {
@@ -31,26 +31,36 @@ export class UsersService {
       password: hashedPassword,
     });
 
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+    const { password: _, ...result } = savedUser; // eslint-disable-line @typescript-eslint/no-unused-vars
+    return result;
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll(): Promise<Array<Omit<User, 'password'>>> {
+    const users = await this.usersRepository.find();
+    return users.map((user) => {
+      const { password: _, ...result } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
+      return result;
+    });
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string): Promise<Omit<User, 'password'>> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
-    return user;
+    const { password: _, ...result } = user; // eslint-disable-line @typescript-eslint/no-unused-vars
+    return result;
   }
 
   async findByUsername(username: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { username } });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Omit<User, 'password'>> {
     const user = await this.findOne(id);
     // If username is being updated, check for conflicts
     if (updateUserDto.username && updateUserDto.username !== user.username) {
@@ -61,7 +71,9 @@ export class UsersService {
     }
 
     Object.assign(user, updateUserDto);
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+    const { password: _, ...result } = savedUser; // eslint-disable-line @typescript-eslint/no-unused-vars
+    return result;
   }
 
   async remove(id: string): Promise<void> {
